@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>어니스트카펜터 | 시공 문의</title>
+<meta name="description" content="카페, 바, 레스토랑 등 상업 공간 목공·인테리어. 질문 몇 개에 답하고 문자로 바로 견적 상담을 받아 보세요.">
+<style>
+  :root { --ink:#1f1b16; --muted:#7a7166; --line:#e6dfd3; --bg:#faf7f2; --card:#fff; --accent:#b4742f; --accent-d:#8f5a22; --soft:#f6ebdd; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:var(--bg); color:var(--ink); line-height:1.5; }
+  .wrap { max-width:560px; margin:0 auto; padding:20px 16px 130px; min-height:100vh; }
+  .brand { font-size:13px; color:var(--accent-d); font-weight:700; letter-spacing:.02em; }
+  .prog { height:4px; background:var(--line); border-radius:4px; margin:10px 0 22px; overflow:hidden; }
+  .prog i { display:block; height:100%; width:0; background:var(--accent); transition:width .25s; }
+  h1 { font-size:22px; margin:0 0 6px; letter-spacing:-.02em; }
+  .hint { color:var(--muted); font-size:14px; margin:0 0 18px; }
+  .opts { display:grid; gap:10px; }
+  .opts.two { grid-template-columns:1fr 1fr; }
+  .opt { background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:15px 14px; font:inherit; font-size:15px; text-align:left; cursor:pointer; color:var(--ink); width:auto; font-weight:500; }
+  .opt small { display:block; color:var(--muted); font-size:12px; font-weight:400; margin-top:2px; }
+  .opt.on { border-color:var(--accent); background:var(--soft); }
+  input[type=number], input[type=date], textarea { width:100%; padding:13px 14px; border:1.5px solid var(--line); border-radius:12px; font:inherit; font-size:17px; background:#fff; }
+  textarea { font-size:15px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:16px 0 6px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .chip.on { border-color:var(--accent); background:var(--soft); color:var(--accent-d); }
+  .chip { padding:8px 14px; border:1.5px solid var(--line); border-radius:99px; background:#fff; font:inherit; font-size:14px; cursor:pointer; width:auto; color:var(--ink); font-weight:500; }
+  .plan { background:var(--card); border:2px solid var(--line); border-radius:16px; padding:16px; margin-bottom:12px; cursor:pointer; position:relative; }
+  .plan.on { border-color:var(--accent); background:var(--soft); }
+  .plan .tag { position:absolute; top:-10px; right:14px; background:var(--accent); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; }
+  .plan .t { font-size:15px; font-weight:700; }
+  .plan .d { font-size:12px; color:var(--muted); margin:2px 0 8px; }
+  .plan .p { font-size:22px; font-weight:800; letter-spacing:-.02em; }
+  .plan .s { font-size:12px; color:var(--accent-d); margin-top:2px; font-weight:600; }
+  .note { font-size:12px; color:var(--muted); margin-top:12px; }
+  .bar { position:fixed; left:0; right:0; bottom:0; background:rgba(250,247,242,.96); border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .bar .in { max-width:560px; margin:0 auto; display:flex; gap:10px; }
+  .btn { flex:1; padding:15px; border:0; border-radius:12px; background:var(--accent); color:#fff; font:inherit; font-size:16px; font-weight:700; cursor:pointer; }
+  .btn:disabled { background:#d8cfc2; cursor:default; }
+  .btn.ghost { flex:0 0 84px; background:#fff; color:var(--ink); border:1.5px solid var(--line); }
+  .alt { text-align:center; font-size:12px; color:var(--muted); margin-top:18px; }
+  .alt a { color:var(--accent-d); }
+  .sum { font-size:13px; color:var(--muted); background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">어니스트카펜터</div>
+  <div class="prog"><i id="prog"></i></div>
+  <div id="view"></div>
+</div>
+<div class="bar"><div class="in">
+  <button class="btn ghost" id="back">이전</button>
+  <button class="btn" id="next">다음</button>
+</div></div>
+
+<script>
+/* ===== 사장님이 수정하는 곳 ===== */
+const CONFIG = {
+  phone: "01063260717",
+  plans: [
+    { id:"self",  name:"반셀프",  desc:"직접 참여로 비용 절감 · 목공 중심 시공", save:"턴키 대비 약 30~40% 저렴", rec:true },
+    { id:"semi",  name:"반턴키",  desc:"반셀프 방식 + 감리·디자인 (인건비만)", save:"턴키 대비 약 20~30% 저렴" },
+    { id:"turn",  name:"턴키",    desc:"설계부터 시공까지 전부 맡기기",            save:"" }
+  ],
+  space:  ["카페","바 / 혼술바","식당 / 레스토랑","미용실 / 뷰티샵","사무실","체육관 / 학원","기타 상업공간"],
+  region: [
+    { t:"수도권", s:"서울 · 경기 · 인천" },
+    { t:"그 외 지방", s:"출장 · 숙식 제공 필요" }
+  ],
+  state: [
+    { t:"철거부터 필요해요", s:"기존 시설물 철거 포함", k:1.15 },
+    { t:"골조·빈 공간이에요", s:"새로 짜는 공간", k:1.0 },
+    { t:"시멘트 벽 그대로예요", s:"순정 상태", k:0.95 },
+    { t:"기존 마감 일부 보수", s:"부분 수정", k:0.8 }
+  ],
+  mood: [
+    { t:"우드톤 · 오쿠메 합판", s:"그루브하고 따뜻한 분위기", k:1.15 },
+    { t:"화이트 · 모던", s:"깔끔하고 심플한 분위기", k:1.0 },
+    { t:"아직 잘 모르겠어요", s:"상담하면서 정할게요", k:1.0 }
+  ]
+};
+
+const A = { space:null, region:null, pyeong:"", over30:false, state:null, mood:null, drawing:null, date:"", memo:"", plan:"self" };
+const STEPS = ["space","region","pyeong","state","mood","extra","result"];
+let step = 0;
+const $ = id => document.getElementById(id);
+
+function optList(list, key, two) {
+  return `<div class="opts ${two?'two':''}">` + list.map((o,i) => {
+    const t = typeof o === "string" ? o : o.t, s = typeof o === "string" ? "" : (o.s||"");
+    return `<button class="opt ${A[key]===i?'on':''}" data-k="${key}" data-i="${i}">${t}${s?`<small>${s}</small>`:""}</button>`;
+  }).join("") + `</div>`;
+}
+
+function render() {
+  const id = STEPS[step];
+  $("prog").style.width = ((step+1)/STEPS.length*100) + "%";
+  $("back").style.visibility = step === 0 ? "hidden" : "visible";
+  let h = "";
+  if (id === "space") h = `<h1>어떤 공간인가요?</h1><p class="hint">시공하실 공간 유형을 골라 주세요.</p>` + optList(CONFIG.space,"space",true);
+  if (id === "region") h = `<h1>어느 지역인가요?</h1><p class="hint">수도권 외 지방은 출장 시공도 가능합니다. (숙식 제공 필요)</p>` + optList(CONFIG.region,"region");
+  if (id === "pyeong") h = `<h1>공간은 몇 평인가요?</h1><p class="hint">대략이어도 괜찮아요. 시공 범위가 되는 면적을 적어 주세요.</p>
+    <input type="number" id="py" inputmode="decimal" min="1" placeholder="예) 12" value="${A.pyeong}"><div class="chips">${[7,10,15,20,25].map(n=>`<button class="chip ${!A.over30 && A.pyeong==n?'on':''}" data-p="${n}">${n}평</button>`).join("")}<button class="chip ${A.over30?'on':''}" data-over="1">30평 이상</button></div>
+    ${A.over30 ? `<p class="note" style="margin-top:10px">30평 이상이시군요. 다음 단계의 <b>상세 설명</b>에 대략적인 평수를 꼭 적어 주세요.</p>` : ""}`;
+  if (id === "state") h = `<h1>지금 공간 상태는요?</h1><p class="hint">가장 가까운 걸 골라 주세요.</p>` + optList(CONFIG.state,"state");
+  if (id === "mood") h = `<h1>원하는 분위기는요?</h1><p class="hint">상담할 때 더 구체적으로 맞춰 드려요.</p>` + optList(CONFIG.mood,"mood");
+  if (id === "extra") h = `<h1>마지막으로 알려 주세요</h1><p class="hint">도면 유무는 꼭 골라 주세요. 나머지는 선택이에요.</p>
+    <label>도면이 있으신가요?</label>` + optList(["도면 있어요","도면 없어요"],"drawing",true) +
+    (A.drawing === 0 ? `<p class="note" style="margin-top:8px">📎 도면이 있으면 상담 문자를 보낸 뒤, 같은 번호로 도면 사진이나 파일을 함께 보내 주세요. 정확한 견적에 큰 도움이 됩니다.</p>` : "") +
+    `<label>상세 설명</label><textarea id="memo" rows="4" placeholder="${A.over30 ? '30평 이상이시라 대략적인 평수를 꼭 적어 주세요. (필수)&#10;예) 약 45평, 다찌 2개, 가벽 3개' : '어떤 시공이 필요한지 편하게 적어 주세요.&#10;예) 다찌 2개, 아파트 단내림 3곳, 가벽 1개'}">${A.memo}</textarea>
+    <div class="chips">${["다찌 1개","아파트 단내림 1곳","가벽 1개","천장 시공","카운터 1개"].map(t=>`<button class="chip" data-add="${t}">+ ${t}</button>`).join("")}</div>
+    <label>공사 예정일 (대략)</label><input type="date" id="dt" value="${A.date}">`;
+  if (id === "result") {
+    h = `<h1>어떤 방식이 궁금하세요?</h1><p class="hint">관심 있는 시공 방식을 골라 주세요. 견적은 내용을 확인한 뒤 정확하게 안내드립니다.</p>
+    <div class="sum">${CONFIG.space[A.space]} · ${CONFIG.region[A.region].t} · ${A.over30 ? "30평 이상" : A.pyeong + "평"} · ${CONFIG.state[A.state].t}</div>` +
+    CONFIG.plans.map(e => `<div class="plan ${A.plan===e.id?'on':''}" data-plan="${e.id}">${e.rec?'<span class="tag">추천</span>':''}
+      <div class="t">${e.name}</div><div class="d" style="margin-bottom:0">${e.desc}</div>${e.save?`<div class="s" style="margin-top:8px">${e.save}</div>`:""}</div>`).join("") +
+    `<p class="note">※ 입력하신 내용을 문자로 보내 주시면 확인 후 순차적으로 견적을 안내드립니다. 현장 작업 중에는 소음으로 전화를 받기 어려울 수 있어 문자 문의를 권장드립니다.</p>
+    <div class="alt">전화 <a href="tel:01063260717">010-6326-0717</a> · 인스타 <a href="https://instagram.com/honest__carpenter">@honest__carpenter</a></div>`;
+  }
+  $("view").innerHTML = h;
+  $("next").textContent = id === "result" ? "문자로 상담 보내기" : "다음";
+  gate();
+  window.scrollTo(0,0);
+}
+
+function gate() {
+  const id = STEPS[step]; let ok = true;
+  if (id === "space") ok = A.space !== null;
+  if (id === "region") ok = A.region !== null;
+  if (id === "pyeong") ok = A.over30 || parseFloat(A.pyeong) > 0;
+  if (id === "state") ok = A.state !== null;
+  if (id === "mood") ok = A.mood !== null;
+  if (id === "extra") ok = A.drawing !== null && (!A.over30 || A.memo.trim().length > 0);
+  $("next").disabled = !ok;
+}
+
+document.addEventListener("click", e => {
+  const o = e.target.closest(".opt"); if (o) { A[o.dataset.k] = +o.dataset.i; render(); if (step < STEPS.length-1 && STEPS[step] !== "extra") {} return; }
+  const c = e.target.closest(".chip");
+  if (c && c.dataset.add) { const m = $("memo"); m.value = (m.value.trim() ? m.value.trim() + ", " : "") + c.dataset.add; A.memo = m.value; gate(); return; }
+  if (c && c.dataset.over) { A.over30 = true; A.pyeong = ""; render(); return; }
+  if (c) { A.over30 = false; A.pyeong = c.dataset.p; render(); return; }
+  const pl = e.target.closest(".plan"); if (pl) { A.plan = pl.dataset.plan; render(); }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "py") { A.pyeong = e.target.value; if (A.over30) { A.over30 = false; render(); $("py").focus(); return; } gate(); }
+  if (e.target.id === "dt") A.date = e.target.value;
+  if (e.target.id === "memo") { A.memo = e.target.value; gate(); }
+});
+$("back").onclick = () => { if (step > 0) { step--; render(); } };
+$("next").onclick = () => {
+  if (STEPS[step] !== "result") { step++; render(); return; }
+  const pl = CONFIG.plans.find(x => x.id === A.plan);
+  const msg = [
+    "[어니스트카펜터 시공 문의]",
+    "공간 유형: " + CONFIG.space[A.space],
+    "지역: " + CONFIG.region[A.region].t,
+    "평수: " + (A.over30 ? "30평 이상 (정확한 평수는 상세 설명 참고)" : A.pyeong + "평"),
+    "현재 상태: " + CONFIG.state[A.state].t,
+    "원하는 분위기: " + CONFIG.mood[A.mood].t,
+    "도면: " + (A.drawing === 0 ? "있음 (이 번호로 따로 보내드리겠습니다)" : "없음"),
+    "공사 예정일: " + (A.date || "미정"),
+    "관심 방식: " + pl.name,
+    A.memo ? "상세 설명: " + A.memo : ""
+  ].filter(Boolean).join("\n");
+  const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?";
+  location.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
+};
+render();
+</script>
+</body>
+</html>
