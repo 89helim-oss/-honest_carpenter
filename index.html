@@ -86,6 +86,7 @@ const A = { space:null, region:null, pyeong:"", over30:false, state:null, mood:n
 const STEPS = ["space","region","pyeong","state","mood","extra","result"];
 let step = 0;
 const $ = id => document.getElementById(id);
+const inApp = /Instagram|FBAN|FBAV|KAKAOTALK|NAVER\(inapp|Line\//i.test(navigator.userAgent);
 
 function optList(list, key, two) {
   return `<div class="opts ${two?'two':''}">` + list.map((o,i) => {
@@ -123,7 +124,7 @@ function render() {
     <div class="alt">전화 <a href="tel:01063260717">010-6326-0717</a> · 인스타 <a href="https://instagram.com/honest__carpenter">@honest__carpenter</a></div>`;
   }
   $("view").innerHTML = h;
-  $("next").textContent = id === "result" ? "문자로 상담 보내기" : "다음";
+  $("next").textContent = id === "result" ? (inApp ? "상담 내용 복사해서 보내기" : "문자로 상담 보내기") : "다음";
   gate();
   window.scrollTo(0,0);
 }
@@ -172,9 +173,11 @@ $("next").onclick = () => {
     A.memo ? "상세 설명: " + A.memo : ""
   ].filter(Boolean).join("\n");
   const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?";
-  const a = document.createElement("a");
-  a.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
-  a.style.display = "none"; document.body.appendChild(a); a.click(); a.remove();
+  if (!inApp) {
+    const a = document.createElement("a");
+    a.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
+    a.style.display = "none"; document.body.appendChild(a); a.click(); a.remove();
+  }
   showFallback(msg);
 };
 
@@ -184,7 +187,7 @@ function showFallback(msg) {
   if (!box) { box = document.createElement("div"); box.id = "fb"; $("view").appendChild(box); }
   const safe = msg.replace(/&/g,"&amp;").replace(/</g,"&lt;");
   box.innerHTML = `<div class="card" style="margin-top:16px;border-color:var(--accent)">
-    <div style="font-weight:700;margin-bottom:6px">문자 앱이 열리지 않았나요?</div>
+    <div style="font-weight:700;margin-bottom:6px">${inApp ? "아래 내용을 문자로 보내 주세요" : "문자 앱이 열리지 않았나요?"}</div>
     <div class="note" style="margin:0 0 10px">아래 내용을 복사해서 <b>010-6326-0717</b>로 문자를 보내 주세요. 인스타그램 안에서 열면 문자 앱이 안 열릴 수 있어요. 우측 상단 <b>⋮ → 외부 브라우저로 열기</b>를 하시면 더 잘 됩니다.</div>
     <textarea id="fbText" rows="8" readonly style="font-size:13px">${safe}</textarea>
     <div style="display:flex;gap:8px;margin-top:10px">
@@ -199,6 +202,12 @@ function showFallback(msg) {
   $("copyMsg").onclick = () => copy(msg, "문의 내용이 복사되었어요. 문자 앱에 붙여넣기 해 주세요.");
   $("copyNum").onclick = () => copy("01063260717", "번호가 복사되었어요.");
   box.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+if (inApp) {
+  const b = document.createElement("div");
+  b.className = "sum"; b.style.background = "#fff6e5";
+  b.innerHTML = "💡 지금 앱 안에서 보고 계세요. 문자 연결이 안 될 수 있어서, 마지막에 <b>내용 복사</b> 방식으로 안내해 드려요. 우측 상단 <b>⋮ → 외부 브라우저로 열기</b>를 하시면 문자 앱이 바로 열려요.";
+  document.querySelector(".wrap").insertBefore(b, $("view"));
 }
 render();
 </script>
