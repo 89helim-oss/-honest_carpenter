@@ -120,7 +120,7 @@ function render() {
     <div class="sum">${CONFIG.space[A.space]} · ${CONFIG.region[A.region].t} · ${A.over30 ? "30평 이상" : A.pyeong + "평"} · ${CONFIG.state[A.state].t}</div>` +
     CONFIG.plans.map(e => `<div class="plan ${A.plan===e.id?'on':''}" data-plan="${e.id}">${e.rec?'<span class="tag">추천</span>':''}
       <div class="t">${e.name}</div><div class="d" style="margin-bottom:0">${e.desc}</div>${e.save?`<div class="s" style="margin-top:8px">${e.save}</div>`:""}</div>`).join("") +
-    `<p class="note">※ 입력하신 내용을 문자로 보내 주시면 확인 후 순차적으로 견적을 안내드립니다. 현장 작업 중에는 소음으로 전화를 받기 어려울 수 있어 문자 문의를 권장드립니다.</p>
+    `${inApp ? `<a class="btn" id="sendNowTop" href="sms:${CONFIG.phone}" style="display:block;text-align:center;text-decoration:none;margin-top:6px">📩 문자로 바로 보내기</a><div class="note" style="margin:6px 0 10px">앱 안에서는 안 열릴 수 있어요. 그럴 땐 아래 <b>상담 내용 복사해서 보내기</b>를 눌러 주세요.</div>` : ""}<p class="note">※ 입력하신 내용을 문자로 보내 주시면 확인 후 순차적으로 견적을 안내드립니다. 현장 작업 중에는 소음으로 전화를 받기 어려울 수 있어 문자 문의를 권장드립니다.</p>
     <div class="alt">전화 <a href="tel:01063260717">010-6326-0717</a> · 인스타 <a href="https://instagram.com/honest__carpenter">@honest__carpenter</a></div>`;
   }
   $("view").innerHTML = h;
@@ -141,6 +141,8 @@ function gate() {
 }
 
 document.addEventListener("click", e => {
+  const sn = e.target.closest("#sendNowTop");
+  if (sn) { sn.href = "sms:" + CONFIG.phone + smsSep() + "body=" + encodeURIComponent(buildMsg()); return; }
   const o = e.target.closest(".opt"); if (o) { A[o.dataset.k] = +o.dataset.i; render(); if (step < STEPS.length-1 && STEPS[step] !== "extra") {} return; }
   const c = e.target.closest(".chip");
   if (c && c.dataset.add) { const m = $("memo"); m.value = (m.value.trim() ? m.value.trim() + ", " : "") + c.dataset.add; A.memo = m.value; gate(); return; }
@@ -156,8 +158,7 @@ document.addEventListener("input", e => {
   if (e.target.id === "memo") { A.memo = e.target.value; gate(); }
 });
 $("back").onclick = () => { if (step > 0) { step--; render(); } };
-$("next").onclick = () => {
-  if (STEPS[step] !== "result") { step++; render(); return; }
+function buildMsg() {
   const pl = CONFIG.plans.find(x => x.id === A.plan);
   const msg = [
     "[어니스트카펜터 시공 문의]",
@@ -172,7 +173,16 @@ $("next").onclick = () => {
     "관심 방식: " + pl.name,
     A.memo ? "상세 설명: " + A.memo : ""
   ].filter(Boolean).join("\n");
-  const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?";
+  return msg;
+}
+function smsSep() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?";
+}
+
+$("next").onclick = () => {
+  if (STEPS[step] !== "result") { step++; render(); return; }
+  const msg = buildMsg();
+  const sep = smsSep();
   if (!inApp) {
     const a = document.createElement("a");
     a.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
