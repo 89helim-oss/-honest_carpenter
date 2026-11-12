@@ -172,8 +172,34 @@ $("next").onclick = () => {
     A.memo ? "상세 설명: " + A.memo : ""
   ].filter(Boolean).join("\n");
   const sep = /iPhone|iPad|iPod/.test(navigator.userAgent) ? "&" : "?";
-  location.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
+  const a = document.createElement("a");
+  a.href = "sms:" + CONFIG.phone + sep + "body=" + encodeURIComponent(msg);
+  a.style.display = "none"; document.body.appendChild(a); a.click(); a.remove();
+  showFallback(msg);
 };
+
+/* 인스타 등 앱 안 브라우저에서 문자 앱이 안 열릴 때를 위한 안내 + 복사 */
+function showFallback(msg) {
+  let box = $("fb");
+  if (!box) { box = document.createElement("div"); box.id = "fb"; $("view").appendChild(box); }
+  const safe = msg.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  box.innerHTML = `<div class="card" style="margin-top:16px;border-color:var(--accent)">
+    <div style="font-weight:700;margin-bottom:6px">문자 앱이 열리지 않았나요?</div>
+    <div class="note" style="margin:0 0 10px">아래 내용을 복사해서 <b>010-6326-0717</b>로 문자를 보내 주세요. 인스타그램 안에서 열면 문자 앱이 안 열릴 수 있어요. 우측 상단 <b>⋮ → 외부 브라우저로 열기</b>를 하시면 더 잘 됩니다.</div>
+    <textarea id="fbText" rows="8" readonly style="font-size:13px">${safe}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" id="copyMsg" style="padding:12px;font-size:14px">내용 복사하기</button>
+      <button class="btn ghost" id="copyNum" style="flex:1;padding:12px;font-size:14px">번호 복사</button>
+    </div><div class="note" id="copyDone" style="margin-top:8px"></div></div>`;
+  const done = t => { $("copyDone").textContent = t; };
+  const copy = (text, ok) => {
+    const fallback = () => { try { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); const r = document.execCommand("copy"); t.remove(); done(r ? ok : "길게 눌러서 직접 복사해 주세요."); } catch(e) { done("길게 눌러서 직접 복사해 주세요."); } };
+    try { navigator.clipboard.writeText(text).then(() => done(ok), fallback); } catch(e) { fallback(); }
+  };
+  $("copyMsg").onclick = () => copy(msg, "문의 내용이 복사되었어요. 문자 앱에 붙여넣기 해 주세요.");
+  $("copyNum").onclick = () => copy("01063260717", "번호가 복사되었어요.");
+  box.scrollIntoView({ behavior:"smooth", block:"center" });
+}
 render();
 </script>
 </body>
