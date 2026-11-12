@@ -74,6 +74,7 @@ const CONFIG = {
     { id:"semi",  name:"반턴키",  desc:"반셀프 방식 + 감리·디자인 (인건비만)", save:"턴키 대비 약 20~30% 저렴" },
     { id:"turn",  name:"턴키",    desc:"설계부터 시공까지 전부 맡기기",            save:"" }
   ],
+  links:  ["철거","전기","설비","페인트","도배","바닥 / 마루","기타"],
   space:  ["카페","바 / 혼술바","식당 / 레스토랑","미용실 / 뷰티샵","사무실","체육관 / 학원","아파트 / 주택","기타 공간"],
   region: [
     { t:"수도권", s:"서울 · 경기 · 인천" },
@@ -92,8 +93,8 @@ const CONFIG = {
   ]
 };
 
-const A = { space:null, region:null, pyeong:"", over30:false, state:null, mood:null, drawing:null, budget:"", date:"", memo:"", plan:"self" };
-const STEPS = ["space","region","pyeong","state","mood","extra","result"];
+const A = { space:null, region:null, pyeong:"", over30:false, state:null, mood:null, drawing:null, links:[], budget:"", date:"", memo:"", plan:"self" };
+const STEPS = ["space","region","pyeong","state","mood","link","extra","result"];
 let step = 0;
 const $ = id => document.getElementById(id);
 const inApp = /Instagram|FBAN|FBAV|KAKAOTALK|NAVER\(inapp|Line\//i.test(navigator.userAgent);
@@ -117,6 +118,8 @@ function render() {
     ${A.over30 ? `<p class="note" style="margin-top:10px">30평 이상이시군요. 다음 단계의 <b>상세 설명</b>에 대략적인 평수를 꼭 적어 주세요.</p>` : ""}`;
   if (id === "state") h = `<h1>지금 공간 상태는요?</h1><p class="hint">가장 가까운 걸 골라 주세요.</p>` + optList(CONFIG.state,"state");
   if (id === "mood") h = `<h1>원하는 분위기는요?</h1><p class="hint">상담할 때 더 구체적으로 맞춰 드려요.</p>` + optList(CONFIG.mood,"mood");
+  if (id === "link") h = `<h1>함께 필요한 시공이 있나요?</h1><p class="hint">목공 외 공정도 <b>연계해서 진행</b>할 수 있어요. 해당되는 걸 모두 골라 주세요. 없으면 바로 다음으로 넘어가셔도 됩니다.</p>
+    <div class="opts two">${CONFIG.links.map((t,i)=>`<button class="opt ${A.links.includes(i)?'on':''}" data-l="${i}">${t}</button>`).join("")}</div>`;
   if (id === "extra") h = `<h1>마지막으로 알려 주세요</h1><p class="hint">도면 유무는 꼭 골라 주세요. 나머지는 선택이에요.</p>
     <label>도면이 있으신가요?</label>` + optList(["도면 있어요","도면 없어요"],"drawing",true) +
     (A.drawing === 0 ? `<p class="note" style="margin-top:8px">📎 도면이 있으면 상담 문자를 보낸 뒤, 같은 번호로 도면 사진이나 파일을 함께 보내 주세요. 정확한 견적에 큰 도움이 됩니다.</p>` : "") +
@@ -153,6 +156,8 @@ function gate() {
 document.addEventListener("click", e => {
   const sn = e.target.closest("#sendNowTop");
   if (sn) { sn.href = "sms:" + CONFIG.phone + smsSep() + "body=" + encodeURIComponent(buildMsg()); return; }
+  const lk = e.target.closest("[data-l]");
+  if (lk) { const i = +lk.dataset.l; A.links = A.links.includes(i) ? A.links.filter(x => x !== i) : [...A.links, i].sort((a,b)=>a-b); render(); return; }
   const o = e.target.closest(".opt"); if (o) { A[o.dataset.k] = +o.dataset.i; render(); if (step < STEPS.length-1 && STEPS[step] !== "extra") {} return; }
   const c = e.target.closest(".chip");
   if (c && c.dataset.add) { const m = $("memo"); m.value = (m.value.trim() ? m.value.trim() + ", " : "") + c.dataset.add; A.memo = m.value; gate(); return; }
@@ -178,6 +183,7 @@ function buildMsg() {
     "현재 상태: " + CONFIG.state[A.state].t,
     "원하는 분위기: " + CONFIG.mood[A.mood].t,
     "도면: " + (A.drawing === 0 ? "있음 (이 번호로 따로 보내드리겠습니다)" : "없음"),
+    "연계 시공: " + (A.links.length ? A.links.map(i => CONFIG.links[i]).join(", ") : "없음"),
     "예산: " + (A.budget.trim() || "미정"),
     "공사 예정일: " + (A.date || "미정"),
     "관심 방식: " + pl.name,
